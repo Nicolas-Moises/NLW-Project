@@ -4,10 +4,17 @@ import { GameBanner } from './components/GameBanner';
 import { CreateAdBanner } from './components/CreateAdBanner';
 import { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
+import { api } from './lib/api';
+
+import { ToastContainer, toast } from 'react-toastify';
 
 import { CreateAdModal } from './components/CreateAdModal';
-import axios from 'axios';
 
+import { useKeenSlider } from 'keen-slider/react';
+import 'keen-slider/keen-slider.min.css';
+import { CircleNotch } from 'phosphor-react';
+
+import 'react-toastify/dist/ReactToastify.min.css';
 
 interface Game {
   id: string;
@@ -19,17 +26,43 @@ interface Game {
 }
 function App() {
 
+  
+  const [isFetching, setIsFetching] = useState(true)
   const [games, setGames] = useState<Game[]>([])
 
+  const [sliderRef] = useKeenSlider({
+    loop: true,
+    slides: {
+      perView: 6,
+      spacing: 20,
+    }
+  })
+
+  async function fecthGames() {
+    try {
+      const response = await api.get('/games')
+    setGames(response.data)
+    } catch(err) {
+      console.log(err)
+    } finally {
+      setIsFetching(false)
+    }
+  }
+
   useEffect(() => {
-    axios('http://localhost:3333/games')
-      .then(response => {
-        setGames(response.data)
-      })
+    fecthGames()
   }, [])
 
+  if(isFetching) {
+    return (
+      <div className='w-screen h-screen flex items-center justify-center bg-black'>
+        <CircleNotch size={40} className='animate-spin ease-linear text-zinc-300' />
+      </div>
+    )
+  }
+
   return (
-    <div className='max-w-[1000px] mx-auto flex flex-col items-center my-10'>
+    <div className='max-w-[1200px] mx-auto flex flex-col items-center my-10'>
       <img src={logoImg} alt="" className="w-[200px]" />
 
       <h1 className='text-4xl text-white font-black mt-10'>
@@ -37,13 +70,15 @@ function App() {
       </h1>
 
       <div
-        className='grid grid-cols-6 gap-4 mt-10'
+        ref={sliderRef}
+        className='mt-10 keen-slider max-w-[1100px]'
       >
 
         {games.map(game => {
           return (
             <GameBanner
               key={game.id}
+              class='keen-slider__slide'
               bannerUrl={game.bannerUrl}
               title={game.title}
               adsCount={game._count.ads}
@@ -54,9 +89,11 @@ function App() {
       </div>
       <Dialog.Root>
         <CreateAdBanner />
-        <CreateAdModal />
+        <CreateAdModal games={games} />
 
       </Dialog.Root>
+
+      <ToastContainer />
     </div>
   )
 }

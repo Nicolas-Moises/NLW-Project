@@ -6,6 +6,7 @@ import * as Select from '@radix-ui/react-select';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import { useEffect, useState, FormEvent } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 
 
@@ -14,26 +15,23 @@ interface Game {
     title: string;
 }
 
-export function CreateAdModal() {
+interface CreateAdModalProps {
+    games: Game[]
+}
 
-    const [games, setGames] = useState<Game[]>([])
+export function CreateAdModal(props:CreateAdModalProps) {
+
     const [weekDays, setWeekDays] = useState<string[]>([])
     const [useVoiceChannel, setUseVoiceChannel] = useState(false)
-
-    useEffect(() => {
-        axios('http://localhost:3333/games')
-            .then(response => {
-                setGames(response.data)
-            })
-    }, [])
 
     async function handleCreateAd(event: FormEvent) {
         event.preventDefault();
         const formData = new FormData(event.target as HTMLFormElement)
         const data = Object.fromEntries(formData)
-
+        console.log(data)
         try {
             await axios.post(`http://localhost:3333/games/${data.game}/ads`, {
+
                 "name": data.name,
                 "yearsPlaying": Number(data.yearsPlaying),
                 "discord": data.discord,
@@ -43,7 +41,10 @@ export function CreateAdModal() {
                 "useVoiceChannel": useVoiceChannel
             })
 
-            alert('Anuncio criado com sucesso')
+            toast.success('Anuncio criado com sucesso', {
+                position: toast.POSITION.BOTTOM_RIGHT,
+                theme: "dark"
+            })
         } catch (err) {
             console.log(err);
             alert('Erro ao criar anúncio!');
@@ -61,7 +62,7 @@ export function CreateAdModal() {
                             <label className="font-semibold " htmlFor="game">Qual o game?</label>
 
                             <Select.Root name="game">
-                                <Select.Trigger aria-label="games" className="bg-zinc-900 py-3 px-4 flex justify-between rounded text-sm text-zinc-500 items-center">
+                                <Select.Trigger aria-label="games" className="group bg-zinc-900 py-3 px-4 flex justify-between rounded text-sm text-zinc-500 items-center">
                                     <Select.Value placeholder="Selecione o game que deseja jogar" />
                                     <Select.Icon>
                                         <CaretDown size={20} className="text-violet-500" />
@@ -69,11 +70,11 @@ export function CreateAdModal() {
                                 </Select.Trigger>
                                 <Select.Content className="bg-zinc-900 rounded-md z-20 w-[400px] translate-y-20 p-1">
 
-                                    {games.map(game => {
+                                    {props.games.map(game => {
                                         return (
                                             <Select.Item
                                                 key={game.id}
-                                                value={game.title}
+                                                value={game.id}
                                                 className="cursor-pointer hover:bg-zinc-700 p-3 rounded flex justify-between items-center"
                                             >
                                                 <Select.ItemText>
@@ -162,10 +163,10 @@ export function CreateAdModal() {
                             </div>
 
                             <div className="flex flex-col gap-2 flex-1">
-                                <label htmlFor="hourStart" className="font-semibold">Qual horário do dia?</label>
+                                <label  className="font-semibold">Qual horário do dia?</label>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <Input name="hourStart" id="hourStart" type="time" placeholder="De" className="px-2" />
-                                    <Input name="hourEnd" id="hourEnd" type="time" placeholder="Até" />
+                                        <Input name="hourStart" id="hourStart" type="time" placeholder="De" />
+                                        <Input name="hourEnd" id="hourEnd" type="time" placeholder="Até" />
                                 </div>
                             </div>
                         </div>
